@@ -96,7 +96,7 @@ const categoriesData = [
 function PageHeader() {
   return (
     <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
-      <h1 className="text-2xl font-bold text-indigo-700">Categories</h1>
+      <h1 className="text-2xl font-bold text-gray-900">Categories</h1>
 
       <div className="flex items-center gap-3">
         {/* Search */}
@@ -116,13 +116,6 @@ function PageHeader() {
         <button className="p-2 text-gray-500 hover:bg-gray-100 rounded-lg transition-colors">
           <HelpCircle className="w-5 h-5" />
         </button>
-
-        {/* Avatar */}
-        <img
-          src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop&crop=face"
-          alt="User"
-          className="w-9 h-9 rounded-full object-cover border-2 border-gray-100"
-        />
       </div>
     </header>
   );
