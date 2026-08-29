@@ -1,5 +1,6 @@
 import React from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { useAppContext } from "../context/AppContext";
 import {
   Wallet,
   LayoutDashboard,
@@ -29,6 +30,13 @@ function UserProfile({ name, role, avatarUrl }) {
 // --- Sidebar Component ---
 export default function Sidebar() {
   const location = useLocation();
+  const navigate = useNavigate();
+  const { user, logout } = useAppContext();
+
+  const handleLogout = async () => {
+    await logout();
+    navigate("/");
+  };
 
   const linkClass = (path) =>
     `w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 ${
@@ -84,13 +92,16 @@ export default function Sidebar() {
       <div className="px-2 space-y-4">
         {/* User Profile */}
         <UserProfile
-          name="Alex Sterling"
-          role="Premium Account"
+          name={user?.name || "User"}
+          role={user?.email || "Member"}
           avatarUrl="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop&crop=face"
         />
 
         {/* Logout */}
-        <button className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-red-500 hover:bg-red-50 transition-colors">
+        <button
+          onClick={handleLogout}
+          className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-red-500 hover:bg-red-50 transition-colors"
+        >
           <LogOut className="w-5 h-5" />
           <span>Logout</span>
         </button>

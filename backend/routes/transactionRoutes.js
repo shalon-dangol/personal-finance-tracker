@@ -7,14 +7,19 @@ import {
   updateTransaction,
   deleteTransaction,
 } from '../features/transaction/transactionController.js';
+import { protect } from '../middleware/authMiddleware.js';
+import { validate } from '../middleware/validate.js';
+import { createTransactionSchema, updateTransactionSchema, transactionIdSchema, transactionQuerySchema } from '../features/transaction/transactionValidation.js';
+
+router.use(protect);
 
 router.route('/')
-  .get(getTransactions)
-  .post(createTransaction);
+  .get(validate(transactionQuerySchema), getTransactions)
+  .post(validate(createTransactionSchema), createTransaction);
 
 router.route('/:id')
-  .get(getTransactionById)
-  .put(updateTransaction)
-  .delete(deleteTransaction);
+  .get(validate(transactionIdSchema), getTransactionById)
+  .put(validate(updateTransactionSchema), updateTransaction)
+  .delete(validate(transactionIdSchema), deleteTransaction);
 
 export default router;
