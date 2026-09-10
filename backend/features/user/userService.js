@@ -1,31 +1,17 @@
-import User from '../../models/User.js';
-import bcrypt from 'bcryptjs';
-import jwt from 'jsonwebtoken';
+import User from "../../models/User.js";
+import bcrypt from "bcryptjs";
+import jwt from "jsonwebtoken";
 import {
   generateAccessToken,
   generateRefreshToken,
   hashRefreshToken,
-} from '../../utils/tokenUtils.js';
-
-export const getAllUsers = async () => {
-  return await User.find({}).select('-password -refreshTokens');
-};
-
-export const getUserById = async (id) => {
-  const user = await User.findById(id).select('-password -refreshTokens');
-  if (!user) {
-    const error = new Error('User not found');
-    error.status = 404;
-    throw error;
-  }
-  return user;
-};
+} from "../../utils/tokenUtils.js";
 
 export const createUser = async (data) => {
   const { name, email, password } = data;
   const existing = await User.findOne({ email });
   if (existing) {
-    const error = new Error('User with this email already exists');
+    const error = new Error("User with this email already exists");
     error.status = 400;
     throw error;
   }
@@ -42,9 +28,9 @@ export const registerUser = async (data) => {
 };
 
 export const loginUser = async (email, password) => {
-  const user = await User.findOne({ email }).select('+password +refreshTokens');
+  const user = await User.findOne({ email }).select("+password +refreshTokens");
   if (!user || !(await bcrypt.compare(password, user.password))) {
-    const error = new Error('Invalid email or password');
+    const error = new Error("Invalid email or password");
     error.status = 401;
     throw error;
   }
@@ -66,7 +52,7 @@ const storeRefreshToken = async (user, refreshToken) => {
 
 export const refreshAccessToken = async (refreshToken) => {
   if (!refreshToken) {
-    const error = new Error('No refresh token provided');
+    const error = new Error("No refresh token provided");
     error.status = 401;
     throw error;
   }
@@ -74,19 +60,25 @@ export const refreshAccessToken = async (refreshToken) => {
   try {
     payload = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET);
   } catch (err) {
-    const error = new Error('Invalid refresh token');
+    const error = new Error("Invalid refresh token");
     error.status = 401;
     throw error;
   }
-  const user = await User.findById(payload.id).select('+refreshTokens');
+  const user = await User.findById(payload.id).select("+refreshTokens");
   if (!user) {
-    const error = new Error('User not found');
+    const error = new Error("User not found");
     error.status = 401;
     throw error;
   }
   const hashed = hashRefreshToken(refreshToken);
   if (!user.refreshTokens.includes(hashed)) {
-    const error = new Error('Refresh token not recognized');
+    // Reuse detection: a token that was already rotated (or revoked) is being
+    // replayed — a possible theft signal. Revoke ALL sessions for this user.
+    user.refreshTokens = [];
+    await user.save();
+    const error = new Error(
+      "Refresh token not recognized. All sessions revoked.",
+    );
     error.status = 401;
     throw error;
   }
@@ -103,6 +95,6 @@ export const logoutUser = async (refreshToken) => {
   const hashed = hashRefreshToken(refreshToken);
   await User.updateOne(
     { refreshTokens: hashed },
-    { $pull: { refreshTokens: hashed } }
+    { $pull: { refreshTokens: hashed } },
   );
 };

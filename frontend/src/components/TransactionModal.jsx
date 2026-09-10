@@ -2,8 +2,29 @@ import { useState, useEffect } from "react";
 import toast from "react-hot-toast";
 import API from "../services/api";
 
-export default function TransactionModal({ open, onClose, onSaved, categories, editing }) {
-  const [form, setForm] = useState({ category: "", description: "", amount: "", type: "expense", date: "" });
+// Format a Date as YYYY-MM-DD using LOCAL time (not UTC), so a transaction
+// saved in the evening doesn't shift to the previous day in the edit form.
+const toLocalDateString = (date) => {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, "0");
+  const d = String(date.getDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
+};
+
+export default function TransactionModal({
+  open,
+  onClose,
+  onSaved,
+  categories,
+  editing,
+}) {
+  const [form, setForm] = useState({
+    category: "",
+    description: "",
+    amount: "",
+    type: "expense",
+    date: "",
+  });
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
 
@@ -14,10 +35,16 @@ export default function TransactionModal({ open, onClose, onSaved, categories, e
         description: editing.description || "",
         amount: editing.amount || "",
         type: editing.type || "expense",
-        date: editing.date ? new Date(editing.date).toISOString().slice(0, 10) : "",
+        date: editing.date ? toLocalDateString(new Date(editing.date)) : "",
       });
     } else {
-      setForm({ category: categories[0]?._id || "", description: "", amount: "", type: "expense", date: "" });
+      setForm({
+        category: categories[0]?._id || "",
+        description: "",
+        amount: "",
+        type: "expense",
+        date: "",
+      });
     }
   }, [editing, categories, open]);
 
@@ -45,33 +72,68 @@ export default function TransactionModal({ open, onClose, onSaved, categories, e
   return (
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-2xl p-6 w-full max-w-md shadow-xl">
-        <h2 className="text-lg font-bold mb-4">{editing ? "Edit Transaction" : "Add Transaction"}</h2>
+        <h2 className="text-lg font-bold mb-4">
+          {editing ? "Edit Transaction" : "Add Transaction"}
+        </h2>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-sm font-medium mb-1">Category</label>
             {categories.length === 0 ? (
-              <p className="text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">No categories yet — <a href="/category" className="underline font-medium">create one</a> first.</p>
+              <p className="text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+                No categories yet —{" "}
+                <a href="/category" className="underline font-medium">
+                  create one
+                </a>{" "}
+                first.
+              </p>
             ) : (
-              <select value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} className="w-full border rounded-lg px-3 py-2 text-sm" required>
+              <select
+                value={form.category}
+                onChange={(e) => setForm({ ...form, category: e.target.value })}
+                className="w-full border rounded-lg px-3 py-2 text-sm"
+                required
+              >
                 <option value="">Select category</option>
                 {categories.map((c) => (
-                  <option key={c._id} value={c._id}>{c.name}</option>
+                  <option key={c._id} value={c._id}>
+                    {c.name}
+                  </option>
                 ))}
               </select>
             )}
           </div>
           <div>
-            <label className="block text-sm font-medium mb-1">Description</label>
-            <input value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} placeholder="e.g. Grocery shopping" className="w-full border rounded-lg px-3 py-2 text-sm" />
+            <label className="block text-sm font-medium mb-1">
+              Description
+            </label>
+            <input
+              value={form.description}
+              onChange={(e) =>
+                setForm({ ...form, description: e.target.value })
+              }
+              placeholder="e.g. Grocery shopping"
+              className="w-full border rounded-lg px-3 py-2 text-sm"
+            />
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-sm font-medium mb-1">Amount</label>
-              <input type="number" step="0.01" value={form.amount} onChange={(e) => setForm({ ...form, amount: e.target.value })} className="w-full border rounded-lg px-3 py-2 text-sm" required />
+              <input
+                type="number"
+                step="0.01"
+                value={form.amount}
+                onChange={(e) => setForm({ ...form, amount: e.target.value })}
+                className="w-full border rounded-lg px-3 py-2 text-sm"
+                required
+              />
             </div>
             <div>
               <label className="block text-sm font-medium mb-1">Type</label>
-              <select value={form.type} onChange={(e) => setForm({ ...form, type: e.target.value })} className="w-full border rounded-lg px-3 py-2 text-sm">
+              <select
+                value={form.type}
+                onChange={(e) => setForm({ ...form, type: e.target.value })}
+                className="w-full border rounded-lg px-3 py-2 text-sm"
+              >
                 <option value="expense">Expense</option>
                 <option value="income">Income</option>
               </select>
@@ -79,12 +141,33 @@ export default function TransactionModal({ open, onClose, onSaved, categories, e
           </div>
           <div>
             <label className="block text-sm font-medium mb-1">Date</label>
-            <input type="date" value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} className="w-full border rounded-lg px-3 py-2 text-sm" />
+            <input
+              type="date"
+              value={form.date}
+              onChange={(e) => setForm({ ...form, date: e.target.value })}
+              className="w-full border rounded-lg px-3 py-2 text-sm"
+            />
           </div>
-          {error && <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2">{error}</p>}
+          {error && (
+            <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
+              {error}
+            </p>
+          )}
           <div className="flex gap-3 justify-end">
-            <button type="button" onClick={onClose} className="px-4 py-2 border rounded-lg text-sm">Cancel</button>
-            <button type="submit" disabled={saving || (categories.length === 0 && !editing)} className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm disabled:opacity-60">{saving ? "Saving..." : editing ? "Update" : "Create"}</button>
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-4 py-2 border rounded-lg text-sm"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={saving || (categories.length === 0 && !editing)}
+              className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm disabled:opacity-60"
+            >
+              {saving ? "Saving..." : editing ? "Update" : "Create"}
+            </button>
           </div>
         </form>
       </div>

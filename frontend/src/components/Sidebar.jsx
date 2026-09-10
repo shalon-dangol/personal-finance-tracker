@@ -11,14 +11,14 @@ import {
 } from "lucide-react";
 
 // --- User Profile Component ---
-function UserProfile({ name, role, avatarUrl }) {
+function UserProfile({ name, role }) {
+  // Show the user's initial instead of a hardcoded external avatar image.
+  const initial = name?.[0]?.toUpperCase() || "U";
   return (
     <div className="flex items-center gap-3 px-4 py-3">
-      <img
-        src={avatarUrl}
-        alt={name}
-        className="w-10 h-10 rounded-full object-cover border-2 border-gray-100"
-      />
+      <div className="w-10 h-10 rounded-full bg-indigo-100 text-indigo-700 flex items-center justify-center text-sm font-bold border-2 border-gray-100">
+        {initial}
+      </div>
       <div className="flex flex-col">
         <span className="text-sm font-semibold text-gray-900">{name}</span>
         <span className="text-xs text-gray-500">{role}</span>
@@ -53,7 +53,7 @@ export default function Sidebar() {
       <div className="px-4 mb-8">
         <div className="flex items-center gap-2.5 mb-1">
           <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center">
-            <Wallet className="w-4.5 h-4.5 text-white" />
+            <Wallet className="w-5 h-5 text-white" />
           </div>
           <span className="text-lg font-bold text-gray-900">WalletWise</span>
         </div>
@@ -94,7 +94,6 @@ export default function Sidebar() {
         <UserProfile
           name={user?.name || "User"}
           role={user?.email || "Member"}
-          avatarUrl="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop&crop=face"
         />
 
         {/* Logout */}

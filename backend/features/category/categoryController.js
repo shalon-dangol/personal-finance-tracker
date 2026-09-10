@@ -1,4 +1,4 @@
-import * as categoryService from './categoryService.js';
+import * as categoryService from "./categoryService.js";
 
 export const getCategories = async (req, res, next) => {
   try {
@@ -9,9 +9,22 @@ export const getCategories = async (req, res, next) => {
   }
 };
 
+// Returns { categoryId: totalSpent } for every category (no top-6 limit).
+export const getSpentTotals = async (req, res, next) => {
+  try {
+    const spentMap = await categoryService.getSpentTotals(req.user._id);
+    res.json(spentMap);
+  } catch (error) {
+    next(error);
+  }
+};
+
 export const getCategoryById = async (req, res, next) => {
   try {
-    const category = await categoryService.getCategoryById(req.params.id, req.user._id);
+    const category = await categoryService.getCategoryById(
+      req.params.id,
+      req.user._id,
+    );
     res.json(category);
   } catch (error) {
     next(error);
@@ -20,7 +33,10 @@ export const getCategoryById = async (req, res, next) => {
 
 export const createCategory = async (req, res, next) => {
   try {
-    const category = await categoryService.createCategory(req.body, req.user._id);
+    const category = await categoryService.createCategory(
+      req.body,
+      req.user._id,
+    );
     res.status(201).json(category);
   } catch (error) {
     next(error);
@@ -29,7 +45,11 @@ export const createCategory = async (req, res, next) => {
 
 export const updateCategory = async (req, res, next) => {
   try {
-    const category = await categoryService.updateCategory(req.params.id, req.body, req.user._id);
+    const category = await categoryService.updateCategory(
+      req.params.id,
+      req.body,
+      req.user._id,
+    );
     res.json(category);
   } catch (error) {
     next(error);
@@ -39,7 +59,7 @@ export const updateCategory = async (req, res, next) => {
 export const deleteCategory = async (req, res, next) => {
   try {
     await categoryService.deleteCategory(req.params.id, req.user._id);
-    res.json({ message: 'Category removed' });
+    res.json({ message: "Category removed" });
   } catch (error) {
     next(error);
   }

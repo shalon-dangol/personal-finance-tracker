@@ -1,4 +1,4 @@
-import { ZodError } from 'zod';
+import { ZodError } from "zod";
 
 export const validate = (schema) => (req, res, next) => {
   try {
@@ -14,7 +14,11 @@ export const validate = (schema) => (req, res, next) => {
     next();
   } catch (err) {
     if (err instanceof ZodError) {
-      const message = err.errors.map((e) => `${e.path.join('.')}: ${e.message}`).join(', ');
+      // Zod v4 exposes validation failures on `issues` (the old `errors`
+      // property no longer exists — using it would throw a TypeError).
+      const message = err.issues
+        .map((e) => `${e.path.join(".")}: ${e.message}`)
+        .join(", ");
       const error = new Error(message);
       error.status = 400;
       return next(error);
