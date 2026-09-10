@@ -1,7 +1,7 @@
-import axios from 'axios';
+import axios from "axios";
 
 const API = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:5000/api',
+  baseURL: import.meta.env.VITE_API_URL || "http://localhost:5000/api",
   withCredentials: true,
 });
 
@@ -12,6 +12,13 @@ export const setAccessToken = (token) => {
 };
 
 export const getAccessToken = () => accessToken;
+
+// Registered by AppContext so a failed refresh can reset the UI to
+// logged-out state (clear user, redirect to login).
+let onAuthFailure = null;
+export const setAuthFailureHandler = (handler) => {
+  onAuthFailure = handler;
+};
 
 let refreshPromise = null;
 
@@ -26,27 +33,35 @@ API.interceptors.response.use(
   (response) => response,
   async (error) => {
     const original = error.config;
-    if (error.response?.status === 401 && !original._retry && !original.url.includes('/login') && !original.url.includes('/refresh')) {
+    if (
+      error.response?.status === 401 &&
+      !original._retry &&
+      !original.url.includes("/login") &&
+      !original.url.includes("/refresh")
+    ) {
       original._retry = true;
       try {
         if (!refreshPromise) {
-          refreshPromise = API.post('/users/refresh').then((res) => {
-            setAccessToken(res.data.accessToken);
-            return res.data.accessToken;
-          }).finally(() => {
-            refreshPromise = null;
-          });
+          refreshPromise = API.post("/users/refresh")
+            .then((res) => {
+              setAccessToken(res.data.accessToken);
+              return res.data.accessToken;
+            })
+            .finally(() => {
+              refreshPromise = null;
+            });
         }
         const token = await refreshPromise;
         original.headers.Authorization = `Bearer ${token}`;
         return API(original);
       } catch (refreshError) {
         setAccessToken(null);
+        if (onAuthFailure) onAuthFailure();
         throw refreshError;
       }
     }
     return Promise.reject(error);
-  }
+  },
 );
 
 export default API;
